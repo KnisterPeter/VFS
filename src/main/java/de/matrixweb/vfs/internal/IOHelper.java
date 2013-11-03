@@ -1,6 +1,5 @@
 package de.matrixweb.vfs.internal;
 
-import java.io.BufferedReader;
 import java.io.Closeable;
 import java.io.File;
 import java.io.FileInputStream;
@@ -88,11 +87,11 @@ public final class IOHelper {
    */
   public static void copy(final Reader reader, final Writer writer)
       throws IOException {
-    final BufferedReader from = new BufferedReader(reader);
-    String line = from.readLine();
-    while (line != null) {
-      writer.write(line);
-      line = from.readLine();
+    final char[] buf = new char[1024];
+    int len = reader.read(buf);
+    while (len > -1) {
+      writer.write(buf, 0, len);
+      len = reader.read(buf);
     }
   }
 
@@ -106,12 +105,12 @@ public final class IOHelper {
       throws IOException {
     final StringBuilder sb = new StringBuilder();
 
-    final BufferedReader reader = new BufferedReader(new InputStreamReader(in,
-        encoding));
-    String line = reader.readLine();
-    while (line != null) {
-      sb.append(line);
-      line = reader.readLine();
+    final Reader reader = new InputStreamReader(in, encoding);
+    final char[] buf = new char[1024];
+    int len = reader.read(buf);
+    while (len > -1) {
+      sb.append(buf, 0, len);
+      len = reader.read(buf);
     }
 
     return sb.toString();
