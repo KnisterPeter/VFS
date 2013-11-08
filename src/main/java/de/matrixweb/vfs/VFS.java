@@ -144,8 +144,8 @@ public class VFS {
         internalImportFS(source, dir);
       }
     } else {
-      final VFile targetFile = find(file.getAbsolutePath().substring(
-          source.getAbsolutePath().length()));
+      final VFile targetFile = find(file.getAbsolutePath().replace('\\', '/')
+          .substring(source.getAbsolutePath().replace('\\', '/').length()));
       VFSUtils.write(targetFile, IOHelper.readToString(file));
     }
   }
