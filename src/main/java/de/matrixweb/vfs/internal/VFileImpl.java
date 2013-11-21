@@ -39,8 +39,7 @@ public class VFileImpl implements VFile {
    * @param directory
    * @param wrapped
    */
-  VFileImpl(final VFileImpl parent, final String name, final boolean directory,
-      final WrappedSystem wrapped) {
+  VFileImpl(final VFileImpl parent, final String name, final boolean directory, final WrappedSystem wrapped) {
     this(parent, name, directory);
     this.wrapped = wrapped;
   }
@@ -76,8 +75,7 @@ public class VFileImpl implements VFile {
    */
   @Override
   public boolean exists() {
-    return this.wrapped != null && this.wrapped.exists() || this.directory
-        || this.length > 0;
+    return this.wrapped != null && this.wrapped.exists() || this.directory || this.length > 0;
   }
 
   /**
@@ -208,7 +206,7 @@ public class VFileImpl implements VFile {
     } else if ("..".equals(parts[0])) {
       child = getParent();
     } else {
-      final Iterator<VFile> it = getChildren().iterator();
+      final Iterator<VFile> it = new ArrayList<VFile>(getChildren()).iterator();
       while (child == null && it.hasNext()) {
         final VFile test = it.next();
         if (test.getName().equals(parts[0])) {
@@ -250,8 +248,7 @@ public class VFileImpl implements VFile {
    */
   @Override
   public long getLastModified() {
-    return this.wrapped != null ? Math.max(this.wrapped.lastModified(),
-        this.lastModified) : this.lastModified;
+    return this.wrapped != null ? Math.max(this.wrapped.lastModified(), this.lastModified) : this.lastModified;
   }
 
   /**
@@ -262,8 +259,7 @@ public class VFileImpl implements VFile {
     final int prime = 31;
     int result = 1;
     result = prime * result + (this.name == null ? 0 : this.name.hashCode());
-    result = prime * result
-        + (this.parent == null ? 0 : this.parent.hashCode());
+    result = prime * result + (this.parent == null ? 0 : this.parent.hashCode());
     return result;
   }
 
@@ -370,8 +366,7 @@ public class VFileImpl implements VFile {
      * @see java.io.OutputStream#write(byte[], int, int)
      */
     @Override
-    public void write(final byte[] b, final int off, final int len)
-        throws IOException {
+    public void write(final byte[] b, final int off, final int len) throws IOException {
       extend(len);
       System.arraycopy(b, off, this.data, this.length, len);
       this.length += len;
