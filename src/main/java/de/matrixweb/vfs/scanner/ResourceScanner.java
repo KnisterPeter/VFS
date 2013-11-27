@@ -1,11 +1,12 @@
-package de.matrixweb.vfs;
+package de.matrixweb.vfs.scanner;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Pattern;
 
+/**
+ * @author markusw
+ */
 public class ResourceScanner {
 
   private final ResourceLister resourceLister;
@@ -14,6 +15,11 @@ public class ResourceScanner {
 
   private final String[] excludes;
 
+  /**
+   * @param resourceLister
+   * @param includes
+   * @param excludes
+   */
   public ResourceScanner(final ResourceLister resourceLister,
       final String[] includes, final String[] excludes) {
     super();
@@ -109,65 +115,6 @@ public class ResourceScanner {
       }
     }
     return null;
-  }
-
-  public static interface ResourceLister {
-
-    Set<String> list(String path);
-
-  }
-
-  public static class FileResourceLister implements ResourceLister {
-
-    private final File base;
-
-    public FileResourceLister(final File base) {
-      super();
-      this.base = base;
-    }
-
-    @Override
-    public Set<String> list(String path) {
-      if (!path.endsWith("/")) {
-        path = path + '/';
-      }
-      Set<String> list = new HashSet<String>();
-      for (File file : new File(this.base, path).listFiles()) {
-        if (file.isDirectory()) {
-          list.add(path + file.getName() + '/');
-        } else {
-          list.add(path + file.getName());
-        }
-      }
-      return list;
-    }
-  }
-
-  public static class VFSResourceLister implements ResourceLister {
-
-    private final VFS vfs;
-
-    public VFSResourceLister(final VFS vfs) {
-      super();
-      this.vfs = vfs;
-    }
-
-    @Override
-    public Set<String> list(String path) {
-      if (path.endsWith("/") && path.length() > 1) {
-        path = path.substring(0, path.length() - 1);
-      }
-      Set<String> list = new HashSet<String>();
-      try {
-        for (VFile file : this.vfs.find(path).getChildren()) {
-          list.add(file.getPath());
-        }
-      } catch (IOException e) {
-        // Ignore this
-      }
-      return list;
-    }
-
   }
 
 }

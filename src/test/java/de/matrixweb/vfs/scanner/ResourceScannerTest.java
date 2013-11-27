@@ -1,4 +1,4 @@
-package de.matrixweb.vfs;
+package de.matrixweb.vfs.scanner;
 
 import java.io.File;
 import java.io.IOException;
@@ -8,9 +8,7 @@ import org.hamcrest.Matchers;
 import org.junit.Assert;
 import org.junit.Test;
 
-import de.matrixweb.vfs.ResourceScanner.FileResourceLister;
-import de.matrixweb.vfs.ResourceScanner.ResourceLister;
-import de.matrixweb.vfs.ResourceScanner.VFSResourceLister;
+import de.matrixweb.vfs.VFS;
 import de.matrixweb.vfs.wrapped.JavaFile;
 
 /**
@@ -23,7 +21,7 @@ public class ResourceScannerTest {
    */
   @Test
   public void testFileGetResources() {
-    ResourceLister lister = new FileResourceLister(new File(
+    final ResourceLister lister = new FileResourceLister(new File(
         "src/test/resources"));
 
     String[] includes = new String[] { "**/css/**", "private/a.css",
@@ -45,14 +43,14 @@ public class ResourceScannerTest {
   }
 
   /**
-   * 
+   * @throws IOException
    */
   @Test
   public void testVFSGetResources() throws IOException {
-    VFS vfs = new VFS();
+    final VFS vfs = new VFS();
     try {
       vfs.mount(vfs.find("/"), new JavaFile(new File("src/test/resources")));
-      ResourceLister lister = new VFSResourceLister(vfs);
+      final ResourceLister lister = new VFSResourceLister(vfs);
 
       String[] includes = new String[] { "**/css/**", "private/a.css",
           "external/*/a.css" };
