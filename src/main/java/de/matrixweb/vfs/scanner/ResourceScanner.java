@@ -11,9 +11,9 @@ public class ResourceScanner {
 
   private final ResourceLister resourceLister;
 
-  private final String[] includes;
+  private String[] includes;
 
-  private final String[] excludes;
+  private String[] excludes;
 
   /**
    * @param resourceLister
@@ -25,7 +25,13 @@ public class ResourceScanner {
     super();
     this.resourceLister = resourceLister;
     this.includes = includes;
+    if (this.includes == null) {
+      this.includes = new String[] { "**" };
+    }
     this.excludes = excludes;
+    if (this.excludes == null) {
+      this.excludes = new String[] {};
+    }
   }
 
   /**
