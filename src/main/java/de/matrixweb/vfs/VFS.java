@@ -115,14 +115,12 @@ public class VFS {
       for (final VFile dir : file.getChildren()) {
         internalExportFS(target, dir);
       }
-    } else {
+    } else if (file.exists()) {
       final File targetFile = new File(target, file.getPath().substring(1));
       targetFile.getParentFile().mkdirs();
       final FileOutputStream out = new FileOutputStream(targetFile);
       try {
         IOHelper.write(targetFile, VFSUtils.readToString(file));
-      } catch (final IOException e) {
-        // Skip silently
       } finally {
         IOHelper.close(out);
       }
