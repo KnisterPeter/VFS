@@ -7,7 +7,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import de.matrixweb.vfs.internal.IOHelper;
 import de.matrixweb.vfs.wrapped.JavaFile;
 import de.matrixweb.vfs.wrapped.MergingVFS;
 
@@ -33,17 +32,8 @@ public class VFSMergeTest {
   public void setUp() throws IOException {
     this.vfs = new VFS();
 
-    this.dir1 = File.createTempFile("vfs-merge", ".dir");
-    this.dir2 = File.createTempFile("vfs-merge", ".dir");
-    this.dir1.delete();
-    this.dir1.mkdirs();
-    this.dir2.delete();
-    this.dir2.mkdirs();
-    IOHelper.write(new File(this.dir1, "file1.txt"), "file1");
-    IOHelper.write(new File(this.dir2, "file2.txt"), "file2");
-    new File(this.dir1, "folder").mkdir();
-    new File(this.dir1, "folder/sub").mkdir();
-    new File(this.dir2, "folder").mkdir();
+    this.dir1 = new File("src/test/resources/merging/folder1");
+    this.dir2 = new File("src/test/resources/merging/folder2");
 
     this.vfs.mount(this.vfs.find("/"), new MergingVFS(new JavaFile(this.dir1),
         new JavaFile(this.dir2)));
@@ -54,9 +44,6 @@ public class VFSMergeTest {
    */
   @After
   public void tearDown() throws IOException {
-    IOHelper.deleteDirectory(this.dir1);
-    IOHelper.deleteDirectory(this.dir2);
-
     this.vfs.dispose();
   }
 
@@ -77,6 +64,8 @@ public class VFSMergeTest {
   public void testExistance() throws IOException {
     assertThat(this.vfs.find("/file1.txt").exists(), is(true));
     assertThat(this.vfs.find("/file2.txt").exists(), is(true));
+    assertThat(this.vfs.find("/sub/file3.txt").exists(), is(true));
+    assertThat(this.vfs.find("/sub/file4.txt").exists(), is(true));
   }
 
   /**
