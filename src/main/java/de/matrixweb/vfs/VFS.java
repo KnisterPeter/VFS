@@ -24,7 +24,7 @@ import de.matrixweb.vfs.wrapped.WrappedVFS;
  */
 public class VFS {
 
-  private VFile root = new Root(this);
+  private Root root = new Root(this);
 
   private final String host;
 
@@ -79,7 +79,10 @@ public class VFS {
    * @param oldroot
    */
   public void rollback(final VFile oldroot) {
-    this.root = oldroot;
+    if (!(oldroot instanceof Root)) {
+      throw new VFSException("'" + oldroot + "' is not vfs root");
+    }
+    this.root = (Root) oldroot;
   }
 
   /**

@@ -5,9 +5,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
+import java.util.Map.Entry;
 
 import de.matrixweb.vfs.VFile;
 import de.matrixweb.vfs.wrapped.WrappedSystem;
@@ -21,9 +20,9 @@ public class VFileImpl implements VFile {
 
   private final String name;
 
-  private List<VFile> children = Collections.emptyList();
+  private boolean directory = false;
 
-  private boolean directory;
+  private List<VFile> children;
 
   private int length = 0;
 
@@ -31,35 +30,109 @@ public class VFileImpl implements VFile {
 
   private long lastModified;
 
-  private WrappedSystem wrapped;
+  private WrappedSystem resolvedFile = null;
 
   /**
    * @param parent
    * @param name
-   * @param directory
-   * @param wrapped
    */
-  VFileImpl(final VFileImpl parent, final String name, final boolean directory, final WrappedSystem wrapped) {
-    this(parent, name, directory);
-    this.wrapped = wrapped;
-  }
-
-  VFileImpl(final VFileImpl parent, final String name, final boolean directory) {
+  public VFileImpl(final VFileImpl parent, final String name) {
     this.parent = parent;
     this.name = name;
-    this.directory = directory;
     if (parent != null) {
       parent.addChild(this);
     }
   }
 
+  private Root getRoot() {
+    VFileImpl f = this;
+    while (true) {
+      if (f == f.getParent()) {
+        return (Root) f;
+      }
+      f = f.getParent();
+    }
+  }
+
+  private List<WrappedSystem> searchWrappedParents() {
+    final List<WrappedSystem> parents = new ArrayList<WrappedSystem>();
+
+    final Entry<VFile, WrappedSystem> mount = getRoot().getMount(this);
+    if (mount != null) {
+      final WrappedSystem mountRoot = mount.getValue();
+      if (mount.getKey().equals(this)) {
+        parents.add(mount.getValue());
+      } else {
+        String relativePath = getPath().substring(
+            mount.getKey().getPath().length());
+        if (relativePath.endsWith("/")) {
+          relativePath = relativePath.substring(0, relativePath.length() - 1);
+        }
+        final String[] path = relativePath.split("/", 2);
+        parents.addAll(findWrappedParentsByPath(mountRoot, path));
+      }
+    }
+
+    return parents;
+  }
+
+  private List<WrappedSystem> findWrappedParentsByPath(
+      final WrappedSystem candidate, final String[] path) {
+    final List<WrappedSystem> parents = new ArrayList<WrappedSystem>();
+    for (final WrappedSystem child : candidate.list()) {
+      if (child.getName().equals(path[0])) {
+        if (path.length > 1) {
+          parents
+              .addAll(findWrappedParentsByPath(child, path[1].split("/", 2)));
+        } else {
+          parents.add(child);
+        }
+      }
+    }
+    return parents;
+  }
+
   /**
-   * @param wrapped
-   *          the wrapped to set
+   * @param directory
    */
-  public void mount(final WrappedSystem wrapped) {
-    this.wrapped = wrapped;
+  public void mount(final WrappedSystem directory) {
     this.directory = true;
+    getRoot().mount(this, directory);
+    final List<WrappedSystem> parents = searchWrappedParents();
+    for (final WrappedSystem parent : parents) {
+      for (final WrappedSystem child : parent.list()) {
+        new VFileImpl(this, child.getName()).setResolvedFile(child);
+      }
+    }
+  }
+
+  private void addChild(final VFileImpl child) {
+    this.directory = true;
+    final List<VFile> children = getChildren();
+    if (!children.contains(child)) {
+      children.add(child);
+    }
+  }
+
+  private void setResolvedFile(final WrappedSystem resolvedFile) {
+    this.resolvedFile = resolvedFile;
+    this.directory = resolvedFile.isDirectory();
+  }
+
+  private WrappedSystem getResolvedFile() {
+    if (this.resolvedFile == null && !isDirectory()) {
+      final List<WrappedSystem> parents = searchWrappedParents();
+      for (final WrappedSystem parent : parents) {
+        for (final WrappedSystem child : parent.list()) {
+          if (child.getName().equals(getName())) {
+            // TODO: Event in case of directory???
+            this.resolvedFile = child;
+            break;
+          }
+        }
+      }
+    }
+    return this.resolvedFile;
   }
 
   /**
@@ -68,22 +141,6 @@ public class VFileImpl implements VFile {
   @Override
   public String getName() {
     return this.name;
-  }
-
-  /**
-   * @see de.matrixweb.vfs.VFile#exists()
-   */
-  @Override
-  public boolean exists() {
-    return this.wrapped != null && this.wrapped.exists() || this.directory || this.length > 0;
-  }
-
-  /**
-   * @see de.matrixweb.vfs.VFile#isDirectory()
-   */
-  @Override
-  public boolean isDirectory() {
-    return this.directory;
   }
 
   /**
@@ -99,29 +156,39 @@ public class VFileImpl implements VFile {
    */
   @Override
   public URL getURL() {
-    return getRoot().getVFS().createUrl(this);
+    return getRoot().getVfs().createUrl(this);
+  }
+
+  /**
+   * @see de.matrixweb.vfs.VFile#exists()
+   */
+  @Override
+  public boolean exists() {
+    if (isDirectory() && getChildren().size() > 0 || this.content != null
+        && this.content.length > 0) {
+      return true;
+    }
+    final WrappedSystem wrapped = getResolvedFile();
+    if (wrapped != null) {
+      return wrapped.exists();
+    }
+    return false;
+  }
+
+  /**
+   * @see de.matrixweb.vfs.VFile#isDirectory()
+   */
+  @Override
+  public boolean isDirectory() {
+    return this.directory;
   }
 
   /**
    * @see de.matrixweb.vfs.VFile#getParent()
    */
   @Override
-  public VFile getParent() {
+  public VFileImpl getParent() {
     return this.parent;
-  }
-
-  void addChild(final VFile file) {
-    if (this.children == Collections.EMPTY_LIST) {
-      this.children = new ArrayList<VFile>();
-      this.directory = true;
-    }
-    if (!this.children.contains(file)) {
-      this.children.add(file);
-    }
-  }
-
-  void removeChild(final VFile file) {
-    this.children.remove(file);
   }
 
   /**
@@ -129,15 +196,16 @@ public class VFileImpl implements VFile {
    */
   @Override
   public List<VFile> getChildren() {
-    if (this.wrapped != null) {
-      final List<WrappedSystem> list = this.wrapped.list();
-      for (final WrappedSystem child : list) {
-        if (!this.children.contains(child)) {
-          new VFileImpl(this, child.getName(), child.isDirectory(), child);
+    if (this.children == null) {
+      this.children = new ArrayList<VFile>();
+      final List<WrappedSystem> parents = searchWrappedParents();
+      for (final WrappedSystem parent : parents) {
+        for (final WrappedSystem child : parent.list()) {
+          new VFileImpl(this, child.getName()).setResolvedFile(child);
         }
       }
     }
-    return Collections.unmodifiableList(this.children);
+    return this.children;
   }
 
   /**
@@ -151,8 +219,9 @@ public class VFileImpl implements VFile {
     if (!exists()) {
       throw new IOException("VFile '" + getPath() + "' does not exists");
     }
-    if (this.wrapped != null && this.wrapped.lastModified() > this.lastModified) {
-      return this.wrapped.getInputStream();
+    final WrappedSystem wrapped = getResolvedFile();
+    if (wrapped != null && wrapped.lastModified() > this.lastModified) {
+      return wrapped.getInputStream();
     }
     return new FileInputStream(this);
   }
@@ -168,68 +237,34 @@ public class VFileImpl implements VFile {
     return new FileOutputStream(this);
   }
 
-  private Root getRoot() {
-    VFile file = getParent();
-    while (file != file.getParent()) {
-      file = file.getParent();
-    }
-    return (Root) file;
-  }
-
   /**
    * @see de.matrixweb.vfs.VFile#find(java.lang.String)
    */
   @Override
   public VFile find(final String path) throws IOException {
     if (path.startsWith("/")) {
-      return getRoot().find(path.substring(1));
+      return getRoot().getVfs().find(path);
     }
+    VFile match = null;
     final String[] parts = path.split("/", 2);
-    VFile child = findVirtualChild(parts);
-    if (child == null) {
-      child = findWrappedChild(parts);
+    if ("..".equals(parts[0])) {
+      match = getParent();
+    } else if (".".equals(parts[0])) {
+      match = this;
+    } else {
+      for (final VFile child : getChildren()) {
+        if (child.getName().equals(parts[0])) {
+          match = child;
+        }
+      }
     }
-    if (child == null) {
-      // Create new virtual non-existing child
-      child = new VFileImpl(this, parts[0], false);
+    if (match == null) {
+      match = new VFileImpl(this, parts[0]);
     }
     if (parts.length > 1) {
-      child = child.find(parts[1]);
+      match = match.find(parts[1]);
     }
-    return child;
-  }
-
-  private VFile findVirtualChild(final String[] parts) {
-    VFile child = null;
-    if (".".equals(parts[0])) {
-      child = this;
-    } else if ("..".equals(parts[0])) {
-      child = getParent();
-    } else {
-      final Iterator<VFile> it = new ArrayList<VFile>(getChildren()).iterator();
-      while (child == null && it.hasNext()) {
-        final VFile test = it.next();
-        if (test.getName().equals(parts[0])) {
-          child = test;
-        }
-      }
-    }
-    return child;
-  }
-
-  private VFile findWrappedChild(final String[] parts) {
-    VFile child = null;
-    if (this.wrapped != null && this.wrapped.isDirectory()) {
-      final List<WrappedSystem> children = this.wrapped.list();
-      for (int i = 0; child == null && i < children.size(); i++) {
-        final WrappedSystem test = children.get(i);
-        if (test.getName().equals(parts[0])) {
-          child = new VFileImpl(this, parts[0], test.isDirectory(), test);
-        }
-      }
-
-    }
-    return child;
+    return match;
   }
 
   /**
@@ -237,9 +272,6 @@ public class VFileImpl implements VFile {
    */
   @Override
   public void mkdir() throws IOException {
-    if (exists()) {
-      throw new IOException("Already exists");
-    }
     this.directory = true;
   }
 
@@ -248,7 +280,9 @@ public class VFileImpl implements VFile {
    */
   @Override
   public long getLastModified() {
-    return this.wrapped != null ? Math.max(this.wrapped.lastModified(), this.lastModified) : this.lastModified;
+    final WrappedSystem wrapped = getResolvedFile();
+    return wrapped != null ? Math
+        .max(wrapped.lastModified(), this.lastModified) : this.lastModified;
   }
 
   /**
@@ -259,7 +293,8 @@ public class VFileImpl implements VFile {
     final int prime = 31;
     int result = 1;
     result = prime * result + (this.name == null ? 0 : this.name.hashCode());
-    result = prime * result + (this.parent == null ? 0 : this.parent.hashCode());
+    result = prime * result
+        + (this.parent == null ? 0 : this.parent.hashCode());
     return result;
   }
 
@@ -366,7 +401,8 @@ public class VFileImpl implements VFile {
      * @see java.io.OutputStream#write(byte[], int, int)
      */
     @Override
-    public void write(final byte[] b, final int off, final int len) throws IOException {
+    public void write(final byte[] b, final int off, final int len)
+        throws IOException {
       extend(len);
       System.arraycopy(b, off, this.data, this.length, len);
       this.length += len;

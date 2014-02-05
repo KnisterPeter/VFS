@@ -63,8 +63,10 @@ public class VFSTest {
 
     final VFile file = this.vfs.find("/some/more/comple.path");
     url = file.getURL().toString();
-    assertThat(url.startsWith("vfs://"), is(true));
-    assertThat(url.endsWith("/some/more/comple.path"), is(true));
+    assertThat("URL should start with 'vfs://' but was " + url,
+        url.startsWith("vfs://"), is(true));
+    assertThat("URL should end with '/some/more/comple.path' but was " + url,
+        url.endsWith("/some/more/comple.path"), is(true));
   }
 
   /**
