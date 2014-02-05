@@ -80,7 +80,7 @@ public class VFileImpl implements VFile {
       final WrappedSystem candidate, final String[] path) {
     final List<WrappedSystem> parents = new ArrayList<WrappedSystem>();
     for (final WrappedSystem child : candidate.list()) {
-      if (child.getName().equals(path[0])) {
+      if (child.isDirectory() && child.getName().equals(path[0])) {
         if (path.length > 1) {
           parents
               .addAll(findWrappedParentsByPath(child, path[1].split("/", 2)));
