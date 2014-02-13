@@ -39,7 +39,7 @@ public class VFS {
    * 
    */
   public void dispose() {
-    VFSManager.unregister(this);
+    VFSManager.unregister(this.host);
   }
 
   /**

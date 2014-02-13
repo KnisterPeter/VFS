@@ -33,10 +33,10 @@ public final class VFSManager {
   }
 
   /**
-   * @param vfs
+   * @param vfsHost
    */
-  public static void unregister(final VFS vfs) {
-    getInstance().active.remove(vfs);
+  public static void unregister(final String vfsHost) {
+    getInstance().active.remove(vfsHost);
   }
 
   private static VFSManager getInstance() {
