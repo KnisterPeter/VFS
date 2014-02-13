@@ -8,7 +8,7 @@
   </parent>
   <groupId>de.matrixweb.vfs</groupId>
   <artifactId>vfs</artifactId>
-  <version>0.3.0</version>
+  <version>0.3.1-SNAPSHOT</version>
   <packaging>bundle</packaging>
 
   <name>VFS</name>
