@@ -1,6 +1,7 @@
 package de.matrixweb.vfs.scanner;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -32,7 +33,8 @@ public class VFSResourceLister implements ResourceLister {
     }
     final Set<String> list = new HashSet<String>();
     try {
-      for (final VFile file : this.vfs.find(path).getChildren()) {
+      for (final VFile file : new ArrayList<VFile>(this.vfs.find(path)
+          .getChildren())) {
         list.add(file.getPath());
       }
     } catch (final IOException e) {

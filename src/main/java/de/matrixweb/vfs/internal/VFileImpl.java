@@ -110,7 +110,7 @@ public class VFileImpl implements VFile {
     this.directory = true;
     final List<VFile> children = getChildren();
     if (!children.contains(child)) {
-      children.add(child);
+      this.children.add(child);
     }
   }
 
