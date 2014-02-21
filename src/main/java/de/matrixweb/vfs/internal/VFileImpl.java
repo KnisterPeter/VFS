@@ -252,6 +252,8 @@ public class VFileImpl implements VFile {
     } else if (".".equals(parts[0])) {
       match = this;
     } else {
+      // Prefetch children to get around ConcurrentModification
+      getChildren();
       for (final VFile child : getChildren()) {
         if (child.getName().equals(parts[0])) {
           match = child;
