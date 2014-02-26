@@ -63,8 +63,7 @@ public class VFileImpl implements VFile {
       if (mount.getKey().equals(this)) {
         parents.add(mount.getValue());
       } else {
-        String relativePath = getPath().substring(
-            mount.getKey().getPath().length());
+        String relativePath = getPath().substring(mount.getKey().getPath().length());
         if (relativePath.endsWith("/")) {
           relativePath = relativePath.substring(0, relativePath.length() - 1);
         }
@@ -76,14 +75,12 @@ public class VFileImpl implements VFile {
     return parents;
   }
 
-  private List<WrappedSystem> findWrappedParentsByPath(
-      final WrappedSystem candidate, final String[] path) {
+  private List<WrappedSystem> findWrappedParentsByPath(final WrappedSystem candidate, final String[] path) {
     final List<WrappedSystem> parents = new ArrayList<WrappedSystem>();
     for (final WrappedSystem child : candidate.list()) {
       if (child.isDirectory() && child.getName().equals(path[0])) {
         if (path.length > 1) {
-          parents
-              .addAll(findWrappedParentsByPath(child, path[1].split("/", 2)));
+          parents.addAll(findWrappedParentsByPath(child, path[1].split("/", 2)));
         } else {
           parents.add(child);
         }
@@ -164,8 +161,7 @@ public class VFileImpl implements VFile {
    */
   @Override
   public boolean exists() {
-    if (isDirectory() && getChildren().size() > 0 || this.content != null
-        && this.content.length > 0) {
+    if (isDirectory() && getChildren().size() > 0 || this.content != null && this.content.length > 0) {
       return true;
     }
     final WrappedSystem wrapped = getResolvedFile();
@@ -283,8 +279,7 @@ public class VFileImpl implements VFile {
   @Override
   public long getLastModified() {
     final WrappedSystem wrapped = getResolvedFile();
-    return wrapped != null ? Math
-        .max(wrapped.lastModified(), this.lastModified) : this.lastModified;
+    return wrapped != null ? Math.max(wrapped.lastModified(), this.lastModified) : this.lastModified;
   }
 
   /**
@@ -295,8 +290,7 @@ public class VFileImpl implements VFile {
     final int prime = 31;
     int result = 1;
     result = prime * result + (this.name == null ? 0 : this.name.hashCode());
-    result = prime * result
-        + (this.parent == null ? 0 : this.parent.hashCode());
+    result = prime * result + (this.parent == null ? 0 : this.parent.hashCode());
     return result;
   }
 
@@ -403,8 +397,7 @@ public class VFileImpl implements VFile {
      * @see java.io.OutputStream#write(byte[], int, int)
      */
     @Override
-    public void write(final byte[] b, final int off, final int len)
-        throws IOException {
+    public void write(final byte[] b, final int off, final int len) throws IOException {
       extend(len);
       System.arraycopy(b, off, this.data, this.length, len);
       this.length += len;

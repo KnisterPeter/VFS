@@ -28,11 +28,21 @@ public class VFS {
 
   private final String host;
 
+  private final Logger logger;
+
   /**
    * 
    */
   public VFS() {
+    this(null);
+  }
+
+  /**
+   * @param logger
+   */
+  public VFS(final Logger logger) {
     this.host = VFSManager.register(this);
+    this.logger = logger;
   }
 
   /**
@@ -51,7 +61,10 @@ public class VFS {
    */
   public VFile mount(final VFile target, final WrappedSystem directory) {
     if (!directory.isDirectory()) {
-      throw new VFSException("Only directories cound be mounted in vfs");
+      throw new VFSException("Only directories cound be mounted in vfs; " + directory.getName() + " is not a directory");
+    }
+    if (this.logger != null) {
+      this.logger.info("Mounting " + directory.getName() + " into " + target.getPath());
     }
     ((VFileImpl) target).mount(directory);
     return target;
@@ -112,8 +125,7 @@ public class VFS {
     internalExportFS(target, this.root);
   }
 
-  private void internalExportFS(final File target, final VFile file)
-      throws IOException {
+  private void internalExportFS(final File target, final VFile file) throws IOException {
     if (file.isDirectory()) {
       for (final VFile dir : file.getChildren()) {
         internalExportFS(target, dir);
@@ -138,8 +150,7 @@ public class VFS {
     internalImportFS(source, source);
   }
 
-  private void internalImportFS(final File source, final File file)
-      throws IOException {
+  private void internalImportFS(final File source, final File file) throws IOException {
     if (file.isDirectory()) {
       for (final File dir : file.listFiles()) {
         internalImportFS(source, dir);
@@ -161,6 +172,13 @@ public class VFS {
     } catch (final MalformedURLException e) {
       throw new VFSException("Failed to create valid URL", e);
     }
+  }
+
+  /**
+   * @return the logger
+   */
+  public Logger getLogger() {
+    return this.logger;
   }
 
 }
