@@ -33,9 +33,11 @@ public class VFSResourceLister implements ResourceLister {
     }
     final Set<String> list = new HashSet<String>();
     try {
-      for (final VFile file : new ArrayList<VFile>(this.vfs.find(path)
-          .getChildren())) {
-        list.add(file.getPath());
+      for (final VFile file : new ArrayList<VFile>(this.vfs.find(path).getChildren())) {
+        // FIX #2: Should not happen, but this is at least a guard
+        if (file != null) {
+          list.add(file.getPath());
+        }
       }
     } catch (final IOException e) {
       // Ignore this
