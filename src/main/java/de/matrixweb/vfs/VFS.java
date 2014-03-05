@@ -64,7 +64,7 @@ public class VFS {
       throw new VFSException("Only directories cound be mounted in vfs; " + directory.getName() + " is not a directory");
     }
     if (this.logger != null) {
-      this.logger.info("Mounting " + directory.getName() + " into " + target.getPath());
+      this.logger.info("Mounting " + directory + " into " + target.getPath());
     }
     ((VFileImpl) target).mount(directory);
     return target;
@@ -135,6 +135,9 @@ public class VFS {
       targetFile.getParentFile().mkdirs();
       final FileOutputStream out = new FileOutputStream(targetFile);
       try {
+        if (logger != null && file != null) {
+          logger.info("VFS: Writing file " + file.getURL());
+        }
         IOHelper.write(targetFile, VFSUtils.readToString(file));
       } finally {
         IOHelper.close(out);
