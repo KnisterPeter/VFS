@@ -1,17 +1,19 @@
 package de.matrixweb.vfs;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
-
 import de.matrixweb.vfs.internal.IOHelper;
 import de.matrixweb.vfs.internal.Root;
 import de.matrixweb.vfs.internal.VFSManager;
 import de.matrixweb.vfs.internal.VFileImpl;
 import de.matrixweb.vfs.wrapped.WrappedSystem;
 import de.matrixweb.vfs.wrapped.WrappedVFS;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLConnection;
+import java.net.URLStreamHandler;
+import java.net.URLStreamHandlerFactory;
 
 /**
  * This implements a file system abstraction which is able to mount native
@@ -29,7 +31,29 @@ public class VFS {
   private final String host;
 
   private final Logger logger;
+  
+  private final static boolean registeredVFStoURL = registerVFStoURL();
+  
+  private static boolean registerVFStoURL() {
+    URL.setURLStreamHandlerFactory(new URLStreamHandlerFactory() {
+          private final URLStreamHandler urLStreamHandler = new URLStreamHandler() {
 
+              @Override
+              protected URLConnection openConnection(URL u) throws IOException {
+                  throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+              }
+          };
+
+          @Override
+          public URLStreamHandler createURLStreamHandler(String protocol) {
+              if (protocol.equalsIgnoreCase(VFS.class.getSimpleName())) {
+                  return urLStreamHandler;
+              }
+              return null;
+          }
+      });
+    return true;
+  }
   /**
    * 
    */
@@ -43,6 +67,8 @@ public class VFS {
   public VFS(final Logger logger) {
     this.host = VFSManager.register(this);
     this.logger = logger;
+    
+    
   }
 
   /**
@@ -170,10 +196,11 @@ public class VFS {
    * @return Returns a {@link VFile} url
    */
   public URL createUrl(final VFile file) {
+    final String url = "vfs://" + this.host + file.getPath();
     try {
-      return new URL("vfs://" + this.host + file.getPath());
+      return new URL(url);
     } catch (final MalformedURLException e) {
-      throw new VFSException("Failed to create valid URL", e);
+      throw new VFSException("Failed to create valid URL:"+url, e);
     }
   }
 
