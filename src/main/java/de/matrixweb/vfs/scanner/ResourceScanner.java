@@ -114,8 +114,12 @@ public class ResourceScanner {
   }
 
   private String findDirect(final String base, final String include) {
-    final String parent = include.substring(0, include.lastIndexOf('/'));
-    for (final String match : this.resourceLister.list(base + parent)) {
+    String search = "";
+    int slash = include.lastIndexOf('/');
+    if (slash != -1) {
+      search = include.substring(0, include.lastIndexOf('/'));
+    }
+    for (final String match : this.resourceLister.list(base + search)) {
       if (match.equals(base + include)) {
         return match;
       }
