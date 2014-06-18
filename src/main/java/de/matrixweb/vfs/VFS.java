@@ -60,6 +60,9 @@ public class VFS {
    * @return Returns the {@link VFile} for the native directory
    */
   public VFile mount(final VFile target, final WrappedSystem directory) {
+    if (!directory.exists()) {
+      throw new VFSException("One of " + directory.getName() + " does not exists.");
+    }
     if (!directory.isDirectory()) {
       throw new VFSException("Only directories cound be mounted in vfs; " + directory.getName() + " is not a directory");
     }
@@ -170,10 +173,11 @@ public class VFS {
    * @return Returns a {@link VFile} url
    */
   public URL createUrl(final VFile file) {
+    String url = "vfs://" + this.host + file.getPath();
     try {
-      return new URL("vfs://" + this.host + file.getPath());
+      return new URL(url);
     } catch (final MalformedURLException e) {
-      throw new VFSException("Failed to create valid URL", e);
+      throw new VFSException("Failed to create valid URL: " + url, e);
     }
   }
 

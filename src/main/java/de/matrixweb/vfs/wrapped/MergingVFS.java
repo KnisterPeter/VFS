@@ -32,7 +32,11 @@ public class MergingVFS implements WrappedSystem {
    */
   @Override
   public String getName() {
-    throw new UnsupportedOperationException();
+    List<String> names = new ArrayList<String>();
+    for (final WrappedSystem system : this.merged) {
+      names.add(system.getName());
+    }
+    return names.toString();
   }
 
   /**
@@ -40,7 +44,11 @@ public class MergingVFS implements WrappedSystem {
    */
   @Override
   public boolean exists() {
-    throw new UnsupportedOperationException();
+    boolean exists = true;
+    for (final WrappedSystem system : this.merged) {
+      exists &= system.exists();
+    }
+    return exists;
   }
 
   /**
