@@ -175,7 +175,7 @@ public class VFS {
   public URL createUrl(final VFile file) {
     String url = "vfs://" + this.host + file.getPath();
     try {
-      return new URL(url);
+      return new URL(null, url, new VFSURLStreamHandler());
     } catch (final MalformedURLException e) {
       throw new VFSException("Failed to create valid URL: " + url, e);
     }
